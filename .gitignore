@@ -1,9 +1,6 @@
 # User config (contains HA tokens)
 config.yaml
 
-# Audio files (user provides their own)
-audio/*.mp3
-
 # Python
 venv/
 __pycache__/
