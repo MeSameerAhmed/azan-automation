@@ -8,11 +8,15 @@ Fetches daily prayer times from the [Aladhan API](https://aladhan.com/prayer-tim
 
 ## Quick Start
 
+No prerequisites — just run:
+
 ```bash
 git clone https://github.com/YOUR_USERNAME/azan-automation.git
 cd azan-automation
-python3 install.py
+./setup.sh
 ```
+
+`setup.sh` installs Python 3 if missing, then launches the interactive installer.
 
 The installer will guide you through:
 
@@ -106,7 +110,7 @@ venv/bin/python check_device.py
 
 ## Requirements
 
-- Python 3.7+
+- **None** — `setup.sh` installs everything (Python 3, venv, pip packages)
 - A Google Home / Chromecast device on the same network
 - *(Optional)* Home Assistant running locally for TV control
 
