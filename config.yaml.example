@@ -1,0 +1,30 @@
+# Azan Automation Configuration
+# Copy this file to config.yaml and customize.
+# Or run: python3 install.py
+
+# Location
+city: Gurgaon
+country: India
+method: 1          # 1=Karachi/Hanafi, 2=ISNA, 3=Muslim World League, 4=Umm Al-Qura, 5=Egyptian, 7=Institute of Geophysics
+school: 1          # 0=Shafi/Maliki/Hanbali, 1=Hanafi
+
+# Google Home device name (as shown in Google Home app)
+device_name: "Living Room speaker"
+
+# Playback
+volume: "100"
+azan_file: audio/azan.mp3
+fajr_azan_file: audio/fajr_azan.mp3
+azan_duration: 136           # seconds — match your azan.mp3 length + 3s buffer
+fajr_azan_duration: 150      # seconds — match your fajr_azan.mp3 length + 3s buffer
+
+# Device check (minutes before prayer to verify Google Home is reachable)
+scan_before_minutes: 5
+
+# Home Assistant TV control (optional — leave empty to skip)
+ha_url: ""
+ha_token: ""
+tv_entity_id: ""
+
+# Log file path
+log_file: azan.log
