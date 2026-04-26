@@ -197,12 +197,34 @@ def main():
     step(7, total_steps, "Audio Files")
     cfg = config.load_config()
 
-    cfg["azan_file"] = config.get_or_prompt(
-        cfg, "azan_file", "Default azan audio path", "audio/azan.mp3"
-    )
-    cfg["fajr_azan_file"] = config.get_or_prompt(
-        cfg, "fajr_azan_file", "Fajr azan audio path", "audio/fajr_azan.mp3"
-    )
+    print("  Place your azan MP3 files in the audio/ directory.")
+    print("  (You can skip this now and add them later.)\n")
+
+    azan_default = config.get(cfg, "azan_file", "audio/azan.mp3")
+    fajr_default = config.get(cfg, "fajr_azan_file", "audio/fajr_azan.mp3")
+
+    azan_path = os.path.join(ROOT, azan_default)
+    if os.path.isfile(azan_path):
+        print(f"  Found: {azan_default}")
+    else:
+        print(f"  Missing: {azan_default}")
+        custom = input(f"  Path to azan MP3 (Enter to keep default): ").strip()
+        if custom:
+            azan_default = custom
+            cfg["azan_file"] = custom
+
+    fajr_path = os.path.join(ROOT, fajr_default)
+    if os.path.isfile(fajr_path):
+        print(f"  Found: {fajr_default}")
+    else:
+        print(f"  Missing: {fajr_default}")
+        custom = input(f"  Path to fajr azan MP3 (Enter to keep default): ").strip()
+        if custom:
+            fajr_default = custom
+            cfg["fajr_azan_file"] = custom
+
+    cfg["azan_file"] = cfg.get("azan_file", azan_default)
+    cfg["fajr_azan_file"] = cfg.get("fajr_azan_file", fajr_default)
     cfg["azan_duration"] = int(config.get_or_prompt(
         cfg, "azan_duration", "Azan duration in seconds", "136"
     ))
