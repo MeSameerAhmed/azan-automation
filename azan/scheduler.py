@@ -39,7 +39,7 @@ def _persistent_entries(python_path=None, root_dir=None):
         root_dir = project_root()
     setup_cmd = f"{python_path} {root_dir}/setup_cron.py"
     return [
-        f"@reboot sleep 60 && {setup_cmd}",
+        f"@reboot sleep 120 && {setup_cmd}",
         f"0 0 * * * {setup_cmd}",
     ]
 
