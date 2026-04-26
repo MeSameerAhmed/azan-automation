@@ -9,10 +9,14 @@ import sys
 import os
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, ROOT)
 
-from azan import config, discovery, welcome, platform_utils as pf
-from azan.scheduler import print_cron_preview, write_cron
+# ── Bootstrap: venv + deps use only stdlib (no yaml/requests needed yet) ──
+from azan.platform_utils import (
+    detect_platform, ensure_system_deps, venv_exists, create_venv,
+    get_venv_python, get_venv_catt, pip_install_flags, project_root,
+)
 
 
 def header(text):
@@ -29,7 +33,7 @@ def step(num, total, label):
 
 def check_venv_packages():
     """Check if all required packages are importable in venv."""
-    python = pf.get_venv_python()
+    python = get_venv_python()
     try:
         subprocess.run(
             [python, "-c", "import requests; import yaml; import catt"],
@@ -48,14 +52,14 @@ def main():
 
     # ── Step 0: Platform Detection ──────────────────────────────
     step(0, total_steps, "Platform Detection")
-    plat = pf.detect_platform()
+    plat = detect_platform()
     print(f"  Platform : {plat['type']}")
     print(f"  Arch     : {plat['arch']}")
     print(f"  Pi       : {plat['is_pi']}")
 
     # ── Step 1: System Dependencies ─────────────────────────────
     step(1, total_steps, "System Dependencies")
-    if pf.ensure_system_deps(plat):
+    if ensure_system_deps(plat):
         print("  System deps OK")
     else:
         print("  Cannot proceed without system dependencies.")
@@ -63,11 +67,11 @@ def main():
 
     # ── Step 2: Virtual Environment ─────────────────────────────
     step(2, total_steps, "Virtual Environment")
-    if pf.venv_exists():
+    if venv_exists():
         print("  venv already exists")
     else:
         print("  Creating venv...")
-        pf.create_venv()
+        create_venv()
         print("  venv created")
 
     # ── Step 3: Python Dependencies ─────────────────────────────
@@ -76,12 +80,23 @@ def main():
         print("  All packages installed")
     else:
         print("  Installing packages...")
-        python = pf.get_venv_python()
-        flags = pf.pip_install_flags(plat)
+        python = get_venv_python()
+        flags = pip_install_flags(plat)
         cmd = [python, "-m", "pip", "install", "-r",
-               os.path.join(pf.project_root(), "requirements.txt")] + flags
+               os.path.join(project_root(), "requirements.txt")] + flags
         subprocess.run(cmd, check=True)
         print("  Packages installed")
+
+    # ── Now safe to import venv packages (yaml, requests, catt) ──
+    # Add venv site-packages to sys.path so system Python can find them
+    import glob
+    site_packages = glob.glob(os.path.join(ROOT, "venv", "lib", "*", "site-packages"))
+    for sp in site_packages:
+        if sp not in sys.path:
+            sys.path.insert(0, sp)
+
+    from azan import config, discovery, welcome
+    from azan.scheduler import print_cron_preview, write_cron
 
     # ── Step 4: Location ────────────────────────────────────────
     step(4, total_steps, "Location")
@@ -113,7 +128,7 @@ def main():
         print(f"  Device already set: {cfg['device_name']}")
     else:
         print("  Scanning for Google Home devices...")
-        catt = pf.get_venv_catt()
+        catt = get_venv_catt()
         devices = discovery.scan_chromecast_devices(catt)
 
         if not devices:
@@ -208,8 +223,8 @@ def main():
     # ── Step 8: Cron Setup ──────────────────────────────────────
     step(8, total_steps, "Cron Setup")
 
-    python = pf.get_venv_python()
-    root = pf.project_root()
+    python = get_venv_python()
+    root = project_root()
     setup_cmd = f"{python} {root}/setup_cron.py"
 
     existing = _read_crontab()
@@ -218,8 +233,6 @@ def main():
     if already_set:
         print("  Cron entries already present")
     else:
-        # Add @reboot + daily cron for setup_cron.py
-        # Prayer-time crons are generated daily by setup_cron.py itself
         persistent = [
             f"@reboot sleep 60 && {setup_cmd}",
             f"0 0 * * * {setup_cmd}",
@@ -260,7 +273,7 @@ def main():
     # ── Welcome chime ───────────────────────────────────────────
     print("Playing welcome chime on your speaker...")
     try:
-        welcome.play_welcome(pf.get_venv_catt(), config.get(cfg, "device_name"))
+        welcome.play_welcome(get_venv_catt(), config.get(cfg, "device_name"))
         print("Welcome to Azan Automation!")
     except Exception:
         print("(Chime skipped — speaker not available)")
