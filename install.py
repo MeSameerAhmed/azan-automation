@@ -8,22 +8,18 @@ import subprocess
 import sys
 import os
 
-# Add project root to path
-ROOT = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# ── Bootstrap: venv + deps use only stdlib (no yaml/requests needed yet) ──
 from azan.platform_utils import (
-    detect_platform, ensure_system_deps, venv_exists, create_venv,
+    detect_platform, ensure_system_deps, create_venv,
     get_venv_python, get_venv_catt, pip_install_flags, project_root,
 )
 
 
 def header(text):
-    width = 50
-    print(f"\n{'=' * width}")
+    print(f"\n{'=' * 50}")
     print(f"  {text}")
-    print(f"{'=' * width}")
+    print(f"{'=' * 50}")
 
 
 def step(num, total, label):
@@ -32,13 +28,11 @@ def step(num, total, label):
 
 
 def check_venv_packages():
-    """Check if all required packages are importable in venv."""
     python = get_venv_python()
     try:
         subprocess.run(
             [python, "-c", "import requests; import yaml; import catt"],
-            capture_output=True,
-            check=True,
+            capture_output=True, check=True,
         )
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -47,17 +41,16 @@ def check_venv_packages():
 
 def main():
     total_steps = 8
+    root = project_root()
 
     header("Azan Automation Setup")
 
-    # ── Step 0: Platform Detection ──────────────────────────────
     step(0, total_steps, "Platform Detection")
     plat = detect_platform()
     print(f"  Platform : {plat['type']}")
     print(f"  Arch     : {plat['arch']}")
     print(f"  Pi       : {plat['is_pi']}")
 
-    # ── Step 1: System Dependencies ─────────────────────────────
     step(1, total_steps, "System Dependencies")
     if ensure_system_deps(plat):
         print("  System deps OK")
@@ -65,16 +58,10 @@ def main():
         print("  Cannot proceed without system dependencies.")
         sys.exit(1)
 
-    # ── Step 2: Virtual Environment ─────────────────────────────
     step(2, total_steps, "Virtual Environment")
-    if venv_exists():
-        print("  venv already exists")
-    else:
-        print("  Creating venv...")
-        create_venv()
-        print("  venv created")
+    create_venv()
+    print("  venv ready")
 
-    # ── Step 3: Python Dependencies ─────────────────────────────
     step(3, total_steps, "Python Dependencies")
     if check_venv_packages():
         print("  All packages installed")
@@ -82,54 +69,44 @@ def main():
         print("  Installing packages...")
         python = get_venv_python()
         flags = pip_install_flags(plat)
-        cmd = [python, "-m", "pip", "install", "-r",
-               os.path.join(project_root(), "requirements.txt")] + flags
-        subprocess.run(cmd, check=True)
+        subprocess.run(
+            [python, "-m", "pip", "install", "-r",
+             os.path.join(root, "requirements.txt")] + flags,
+            check=True,
+        )
         print("  Packages installed")
 
-    # ── Now safe to import venv packages (yaml, requests, catt) ──
-    # Add venv site-packages to sys.path so system Python can find them
     import glob
-    site_packages = glob.glob(os.path.join(ROOT, "venv", "lib", "*", "site-packages"))
+    site_packages = glob.glob(os.path.join(root, "venv", "lib", "*", "site-packages"))
     for sp in site_packages:
         if sp not in sys.path:
             sys.path.insert(0, sp)
 
     from azan import config, discovery, welcome
-    from azan.scheduler import print_cron_preview, write_cron
+    from azan.scheduler import write_cron
 
-    # ── Step 4: Location ────────────────────────────────────────
-    step(4, total_steps, "Location")
     cfg = config.load_config()
 
-    cfg["city"] = config.get_or_prompt(cfg, "city", "City", "Gurgaon")
-    cfg["country"] = config.get_or_prompt(cfg, "country", "Country", "India")
+    step(4, total_steps, "Location")
+    cfg["city"] = config.get_or_prompt(cfg, "city", "City")
+    cfg["country"] = config.get_or_prompt(cfg, "country", "Country")
     cfg["method"] = int(config.get_or_prompt(
         cfg, "method",
-        "Calculation method (1=Karachi/Hanafi, 2=ISNA, 3=MWL)", "1"
+        "Calculation method (1=Karachi/Hanafi, 2=ISNA, 3=MWL)",
     ))
     if cfg["method"] == 1:
-        cfg["school"] = 1  # Hanafi for Karachi method
+        cfg["school"] = 1
     else:
-        school = config.get_or_prompt(
-            cfg, "school",
-            "School (0=Shafi, 1=Hanafi)", "0"
-        )
-        cfg["school"] = int(school)
+        cfg["school"] = int(config.get_or_prompt(cfg, "school", "School (0=Shafi, 1=Hanafi)"))
 
-    config.save_config(cfg)
     print(f"  Saved: {cfg['city']}, {cfg['country']} (method={cfg['method']})")
 
-    # ── Step 5: Device Discovery ────────────────────────────────
     step(5, total_steps, "Google Home Device")
-    cfg = config.load_config()
-
     if config.get(cfg, "device_name"):
         print(f"  Device already set: {cfg['device_name']}")
     else:
         print("  Scanning for Google Home devices...")
-        catt = get_venv_catt()
-        devices = discovery.scan_chromecast_devices(catt)
+        devices = discovery.scan_chromecast_devices(get_venv_catt())
 
         if not devices:
             print("  No devices found. Make sure Google Home is on the same network.")
@@ -150,12 +127,7 @@ def main():
             cfg["device_name"] = devices[idx][0]
             print(f"  Selected: {cfg['device_name']}")
 
-        config.save_config(cfg)
-
-    # ── Step 6: Home Assistant (Optional) ───────────────────────
     step(6, total_steps, "Home Assistant (optional)")
-    cfg = config.load_config()
-
     if config.get(cfg, "tv_entity_id"):
         print(f"  TV already configured: {cfg['tv_entity_id']}")
     else:
@@ -173,9 +145,7 @@ def main():
                 for i, (name, eid) in enumerate(players, 1):
                     print(f"    [{i}] {name} ({eid})")
                 print(f"    [{len(players) + 1}] Skip TV control")
-                choice = input(
-                    f"  Select [1-{len(players) + 1}]: "
-                ).strip()
+                choice = input(f"  Select [1-{len(players) + 1}]: ").strip()
                 idx = int(choice) - 1 if choice.isdigit() else len(players)
                 if 0 <= idx < len(players):
                     cfg["tv_entity_id"] = players[idx][1]
@@ -188,101 +158,42 @@ def main():
                     cfg["tv_entity_id"] = entity
                 else:
                     print("  TV control skipped")
-
-            config.save_config(cfg)
         else:
             print("  TV control skipped")
 
-    # ── Step 7: Audio Files ─────────────────────────────────────
     step(7, total_steps, "Audio Files")
-    cfg = config.load_config()
-
     print("  Place your azan MP3 files in the audio/ directory.")
     print("  (You can skip this now and add them later.)\n")
 
-    azan_default = config.get(cfg, "azan_file", "audio/azan.mp3")
-    fajr_default = config.get(cfg, "fajr_azan_file", "audio/fajr_azan.mp3")
+    for key, label in [("azan_file", "azan"), ("fajr_azan_file", "fajr azan")]:
+        default = config.get(cfg, key)
+        full_path = os.path.join(root, default)
+        if os.path.isfile(full_path):
+            print(f"  Found: {default}")
+        else:
+            print(f"  Missing: {default}")
+            custom = input(f"  Path to {label} MP3 (Enter to keep default): ").strip()
+            if custom:
+                cfg[key] = custom
 
-    azan_path = os.path.join(ROOT, azan_default)
-    if os.path.isfile(azan_path):
-        print(f"  Found: {azan_default}")
-    else:
-        print(f"  Missing: {azan_default}")
-        custom = input(f"  Path to azan MP3 (Enter to keep default): ").strip()
-        if custom:
-            azan_default = custom
-            cfg["azan_file"] = custom
-
-    fajr_path = os.path.join(ROOT, fajr_default)
-    if os.path.isfile(fajr_path):
-        print(f"  Found: {fajr_default}")
-    else:
-        print(f"  Missing: {fajr_default}")
-        custom = input(f"  Path to fajr azan MP3 (Enter to keep default): ").strip()
-        if custom:
-            fajr_default = custom
-            cfg["fajr_azan_file"] = custom
-
-    cfg["azan_file"] = cfg.get("azan_file", azan_default)
-    cfg["fajr_azan_file"] = cfg.get("fajr_azan_file", fajr_default)
-    cfg["azan_duration"] = int(config.get_or_prompt(
-        cfg, "azan_duration", "Azan duration in seconds", "136"
-    ))
-    cfg["fajr_azan_duration"] = int(config.get_or_prompt(
-        cfg, "fajr_azan_duration", "Fajr azan duration in seconds", "150"
-    ))
-    cfg["volume"] = config.get_or_prompt(
-        cfg, "volume", "Volume (0-100)", "100"
-    )
-    cfg["scan_before_minutes"] = int(config.get_or_prompt(
-        cfg, "scan_before_minutes",
-        "Minutes before prayer to scan device", "5"
-    ))
+    cfg["azan_duration"] = int(config.get_or_prompt(cfg, "azan_duration", "Azan duration in seconds"))
+    cfg["fajr_azan_duration"] = int(config.get_or_prompt(cfg, "fajr_azan_duration", "Fajr azan duration in seconds"))
+    cfg["volume"] = config.get_or_prompt(cfg, "volume", "Volume (0-100)")
+    cfg["scan_before_minutes"] = int(config.get_or_prompt(cfg, "scan_before_minutes", "Minutes before prayer to scan device"))
 
     config.save_config(cfg)
     print("  Audio settings saved")
 
-    # ── Step 8: Cron Setup ──────────────────────────────────────
     step(8, total_steps, "Cron Setup")
+    write_cron([], get_venv_python(), root)
+    print("  Cron entries written")
 
-    python = get_venv_python()
-    root = project_root()
-    setup_cmd = f"{python} {root}/setup_cron.py"
-
-    existing = _read_crontab()
-    already_set = any("setup_cron.py" in line for line in existing)
-
-    if already_set:
-        print("  Cron entries already present")
-    else:
-        persistent = [
-            f"@reboot sleep 60 && {setup_cmd}",
-            f"0 0 * * * {setup_cmd}",
-        ]
-        filtered = [
-            line for line in existing
-            if "play_azan.py" not in line
-            and "check_device.py" not in line
-            and "setup_cron.py" not in line
-        ]
-        new_cron = "\n".join(filtered + persistent) + "\n"
-        proc = subprocess.run(
-            ["crontab", "-"], input=new_cron, text=True, capture_output=True,
-        )
-        if proc.returncode == 0:
-            print("  Cron entries written")
-        else:
-            print(f"  ERROR writing crontab: {proc.stderr}")
-            print("  You can add manually:")
-            for line in persistent:
-                print(f"    {line}")
-
-    # ── Done ────────────────────────────────────────────────────
     header("Setup Complete!")
 
+    python = get_venv_python()
     print(f"""
   Config: {config.CONFIG_FILE}
-  Log:    {os.path.join(root, cfg.get('log_file', 'azan.log'))}
+  Log:    {os.path.join(root, config.get(cfg, 'log_file'))}
 
   Next steps:
     1. Add your audio files to audio/ directory
@@ -292,25 +203,12 @@ def main():
   To reconfigure, run this installer again or edit config.yaml directly.
 """)
 
-    # ── Welcome chime ───────────────────────────────────────────
-    print("Playing welcome chime on your speaker...")
+    print("Playing welcome message on your speaker...")
     try:
         welcome.play_welcome(get_venv_catt(), config.get(cfg, "device_name"))
         print("Welcome to Azan Automation!")
     except Exception:
-        print("(Chime skipped — speaker not available)")
-
-
-def _read_crontab():
-    try:
-        result = subprocess.run(
-            ["crontab", "-l"], capture_output=True, text=True,
-        )
-        if result.returncode == 0:
-            return [l for l in result.stdout.splitlines() if l.strip()]
-    except FileNotFoundError:
-        pass
-    return []
+        print("(Welcome message skipped — speaker not available)")
 
 
 if __name__ == "__main__":

@@ -16,15 +16,12 @@ from azan import config, prayer_times, scheduler
 def main():
     dry_run = "--dry-run" in sys.argv
 
-    cfg = config.load_config()
-    if not cfg:
-        print("ERROR: config.yaml not found. Run install.py first.")
-        sys.exit(1)
+    cfg = config.load_config_or_exit()
 
     city = config.get(cfg, "city")
     country = config.get(cfg, "country")
-    method = int(config.get(cfg, "method", 1))
-    school = int(config.get(cfg, "school", 1))
+    method = int(config.get(cfg, "method"))
+    school = int(config.get(cfg, "school"))
 
     print(f"[{datetime.now()}] Fetching prayer times for {city}, {country}...")
 

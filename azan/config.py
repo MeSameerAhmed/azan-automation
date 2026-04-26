@@ -26,16 +26,22 @@ DEFAULTS = {
 }
 
 
-def config_exists():
-    return os.path.isfile(CONFIG_FILE)
-
-
 def load_config():
     """Load config.yaml. Returns empty dict if not found."""
-    if not config_exists():
+    try:
+        with open(CONFIG_FILE) as f:
+            return yaml.safe_load(f) or {}
+    except FileNotFoundError:
         return {}
-    with open(CONFIG_FILE) as f:
-        return yaml.safe_load(f) or {}
+
+
+def load_config_or_exit():
+    """Load config or exit with error. Used by cron-triggered scripts."""
+    cfg = load_config()
+    if not cfg:
+        print("ERROR: config.yaml not found. Run install.py first.")
+        sys.exit(1)
+    return cfg
 
 
 def save_config(data):
@@ -52,10 +58,7 @@ def get(config, key, default=None):
 
 
 def get_or_prompt(config, key, prompt_text, default=None):
-    """Return config value if set, otherwise prompt user interactively.
-
-    If user enters empty string, uses the default.
-    """
+    """Return config value if set, otherwise prompt user interactively."""
     existing = config.get(key)
     if existing is not None and existing != "":
         return existing

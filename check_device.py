@@ -10,33 +10,25 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from azan import config, discovery
-from azan.platform_utils import get_venv_catt, detect_platform, reboot
+from azan.platform_utils import get_venv_catt, reboot
 
 
 def main():
     cfg = config.load_config()
     if not cfg:
-        print("ERROR: config.yaml not found.")
+        print("ERROR: config.yaml not found. Run install.py first.")
         sys.exit(1)
 
     device_name = config.get(cfg, "device_name")
-    catt_path = get_venv_catt()
-
     print(f"Scanning for {device_name}...")
-    devices = discovery.scan_chromecast_devices(catt_path)
+    devices = discovery.scan_chromecast_devices(get_venv_catt())
 
-    found = any(name == device_name for name, _ in devices)
-
-    if found:
+    if any(name == device_name for name, _ in devices):
         print(f"{device_name} is online.")
     else:
         print(f"{device_name} NOT found!")
-        plat = detect_platform()
-        if plat["is_pi"] or plat["type"] == "linux":
-            print("Rebooting...")
-            reboot()
-        else:
-            print("Reboot not supported on this platform.")
+        reboot()
+        print("Reboot not supported on this platform.")
 
 
 if __name__ == "__main__":
