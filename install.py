@@ -11,7 +11,7 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from azan import config, discovery, platform_utils as pf
+from azan import config, discovery, welcome, platform_utils as pf
 from azan.scheduler import print_cron_preview, write_cron
 
 
@@ -256,6 +256,14 @@ def main():
 
   To reconfigure, run this installer again or edit config.yaml directly.
 """)
+
+    # ── Welcome chime ───────────────────────────────────────────
+    print("Playing welcome chime on your speaker...")
+    try:
+        welcome.play_welcome(pf.get_venv_catt(), config.get(cfg, "device_name"))
+        print("Welcome to Azan Automation!")
+    except Exception:
+        print("(Chime skipped — speaker not available)")
 
 
 def _read_crontab():
