@@ -50,7 +50,7 @@ def play_welcome(catt_path, device_name):
 
     chime_path = generate_welcome_chime()
     try:
-        success = player.play_azan(catt_path, device_name, chime_path, "50")
+        success = player.play_azan(catt_path, device_name, chime_path, "100")
         if success:
             # Wait for chime to finish (~1.6 seconds)
             import time
