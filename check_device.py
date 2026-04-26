@@ -28,7 +28,6 @@ def main():
     else:
         print(f"{device_name} NOT found!")
         reboot()
-        print("Reboot not supported on this platform.")
 
 
 if __name__ == "__main__":

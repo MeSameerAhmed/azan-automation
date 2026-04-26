@@ -28,4 +28,4 @@ def fetch_prayer_times(city, country, method=1, school=1):
     resp.raise_for_status()
 
     timings = resp.json()["data"]["timings"]
-    return {name: timings[name] for name in PRAYER_NAMES}
+    return {name: timings[name].split(" ")[0] for name in PRAYER_NAMES}

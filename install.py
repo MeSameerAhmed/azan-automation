@@ -123,7 +123,7 @@ def main():
             for i, (name, ip) in enumerate(devices, 1):
                 print(f"    [{i}] {name} ({ip})")
             choice = input(f"  Select device [1-{len(devices)}]: ").strip()
-            idx = int(choice) - 1 if choice.isdigit() else 0
+            idx = max(0, min(int(choice) - 1, len(devices) - 1)) if choice.isdigit() else 0
             cfg["device_name"] = devices[idx][0]
             print(f"  Selected: {cfg['device_name']}")
 

@@ -30,7 +30,7 @@ def _run(catt_path, device_name, *args):
     """Run a catt command. Returns True on success."""
     cmd = [catt_path, "-d", device_name] + list(args)
     try:
-        subprocess.run(cmd, capture_output=True, text=True, check=True)
+        subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=60)
         return True
     except subprocess.CalledProcessError as e:
         print(f"catt error: {e.stderr.strip() or e}")
