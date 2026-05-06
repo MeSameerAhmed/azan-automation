@@ -10,6 +10,10 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+try:
+    from azan import log
+except Exception:
+    log = print
 from azan import config, player, tv_control
 from azan.platform_utils import get_venv_catt, project_root
 
@@ -37,7 +41,7 @@ def main():
     except Exception:
         pass
 
-    print(f"Playing {'Fajr ' if is_fajr else ''}Azan on {device_name}...")
+    log(f"Playing {'Fajr ' if is_fajr else ''}Azan on {device_name}...")
     success = player.play_azan(get_venv_catt(), device_name, azan_file, volume)
 
     if not success:
@@ -50,11 +54,11 @@ def main():
 
     time.sleep(duration)
 
-    print("Azan playback completed.")
+    log("Azan playback completed.")
 
     if tv_was_active:
         try:
-            print("Resuming TV...")
+            log("Resuming TV...")
             tv_control.resume_tv(cfg)
         except Exception:
             pass

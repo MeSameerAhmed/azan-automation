@@ -1,0 +1,16 @@
+{
+  "allowedMcpServers": [
+    {
+      "serverName": "github"
+    },
+    {
+      "serverName": "redmine"
+    },
+    {
+      "serverName": "web-reader"
+    },
+    {
+      "serverName": "4_5v_mcp"
+    }
+  ]
+}
