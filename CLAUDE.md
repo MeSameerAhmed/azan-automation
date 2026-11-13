@@ -71,6 +71,9 @@ Google Home falls into deep sleep between check (4:07) and play (4:12). `catt sc
 ### WiFi Drops
 Pi Zero 2 W (BCM43430) drops WiFi every 30-60 seconds. ZeroTier becomes unreachable; reconnects automatically. rpi-connect is backup access.
 
+### Prayer Times API (must match the mosque website)
+`azan/prayer_times.py` hits Aladhan with the exact parameters baked into the mosque's website (`zamongajumath.com`, file `abic.js`): fixed coordinates `42.3601, -71.0589`, `method=2` (ISNA), `school=1` (Hanafi), and the `DD-MM-YYYY` date in the path. Do **not** switch to `timingsByCity` for the main path — that's only a fallback when coordinates are blanked out. Changing any of these makes the speakers drift from the website and the masjid TVs.
+
 ### Cron % Escaping
 Never use `%` in cron commands — it's interpreted as newline. Use Python log() timestamps instead.
 

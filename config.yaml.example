@@ -3,10 +3,17 @@
 # Or run: python3 install.py
 
 # Location
-city: Gurgaon
-country: India
-method: 1          # 1=Karachi/Hanafi, 2=ISNA, 3=Muslim World League, 4=Umm Al-Qura, 5=Egyptian, 7=Institute of Geophysics
+# Coordinates are what the mosque website (zamongajumath.com) uses, so the
+# speakers play azan at the exact minute the site and masjid TVs display.
+# These are required unless you prefer the city/country fallback below.
+latitude: 42.3601
+longitude: -71.0589
+method: 2          # 2=ISNA (North America) — what the mosque uses
 school: 1          # 0=Shafi/Maliki/Hanbali, 1=Hanafi
+
+# Fallback location — only used when latitude/longitude are left empty.
+city: Boston
+country: United States
 
 # Google Home device name (as shown in Google Home app)
 device_name: "Living Room speaker"

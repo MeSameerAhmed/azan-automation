@@ -18,15 +18,18 @@ def main():
 
     cfg = config.load_config_or_exit()
 
-    city = config.get(cfg, "city")
-    country = config.get(cfg, "country")
-    method = int(config.get(cfg, "method"))
-    school = int(config.get(cfg, "school"))
+    latitude = config.get(cfg, "latitude")
+    longitude = config.get(cfg, "longitude")
 
-    print(f"[{datetime.now()}] Fetching prayer times for {city}, {country}...")
+    if latitude not in (None, "") and longitude not in (None, ""):
+        location = f"{latitude}, {longitude}"
+    else:
+        location = f"{config.get(cfg, 'city')}, {config.get(cfg, 'country')}"
+
+    print(f"[{datetime.now()}] Fetching prayer times for {location}...")
 
     try:
-        times = prayer_times.fetch_prayer_times(city, country, method, school)
+        times = prayer_times.fetch_prayer_times_from_config(cfg)
     except Exception as e:
         print(f"ERROR fetching prayer times: {e}")
         sys.exit(1)

@@ -88,18 +88,31 @@ def main():
     cfg = config.load_config()
 
     step(4, total_steps, "Location")
-    cfg["city"] = config.get_or_prompt(cfg, "city", "City")
-    cfg["country"] = config.get_or_prompt(cfg, "country", "Country")
+    print("  Coordinates come from the mosque website so times match exactly.")
+    while True:
+        try:
+            cfg["latitude"] = float(config.get_or_prompt(cfg, "latitude", "Latitude"))
+            cfg["longitude"] = float(config.get_or_prompt(cfg, "longitude", "Longitude"))
+            break
+        except ValueError:
+            print("  Latitude/longitude must be numbers (e.g. 42.3601, -71.0589). Try again.")
+            cfg.pop("latitude", None)
+            cfg.pop("longitude", None)
+
+    # City/country is only the fallback when no coordinates are set.
+    cfg["city"] = cfg.get("city") or config.DEFAULTS["city"]
+    cfg["country"] = cfg.get("country") or config.DEFAULTS["country"]
+
     cfg["method"] = int(config.get_or_prompt(
         cfg, "method",
-        "Calculation method (1=Karachi/Hanafi, 2=ISNA, 3=MWL)",
+        "Calculation method (2=ISNA, 3=MWL, 1=Karachi)",
     ))
     if cfg["method"] == 1:
         cfg["school"] = 1
     else:
         cfg["school"] = int(config.get_or_prompt(cfg, "school", "School (0=Shafi, 1=Hanafi)"))
 
-    print(f"  Saved: {cfg['city']}, {cfg['country']} (method={cfg['method']})")
+    print(f"  Saved: {cfg['latitude']}, {cfg['longitude']} (method={cfg['method']})")
 
     step(5, total_steps, "Google Home Device")
     if config.get(cfg, "device_name"):

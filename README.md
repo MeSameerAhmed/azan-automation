@@ -2,7 +2,7 @@
 
 Automated prayer time (Azan) player for Google Home / Chromecast devices.
 
-Fetches daily prayer times from the [Aladhan API](https://aladhan.com/prayer-times-api), casts Azan audio to your Google Home at each prayer time, and optionally pauses/resumes your TV via Home Assistant.
+Fetches daily prayer times from the [Aladhan API](https://aladhan.com/prayer-times-api) using the **same parameters as the mosque's website** (Allston Brighton Islamic Center — [zamongajumath.com](https://zamongajumath.com)), casts Azan audio to your Google Home at each prayer time, and optionally pauses/resumes your TV via Home Assistant.
 
 **Works on:** Raspberry Pi (Zero 2 W, 3, 4, 5), Linux, macOS
 
@@ -22,7 +22,7 @@ The installer will guide you through:
 
 1. **System deps** — installs `python3-venv` etc. on Pi/Linux
 2. **Virtual env** — creates `venv/` with all Python packages
-3. **Location** — your city, country, prayer calculation method
+3. **Location** — latitude/longitude, prayer calculation method
 4. **Device discovery** — scans for Google Home devices on your network
 5. **Home Assistant** *(optional)* — pauses/resumes TV during Azan
 6. **Audio files** — paths to your Azan MP3 files
@@ -64,10 +64,12 @@ Config is stored in `config.yaml` (created by installer or manually from `config
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `city` | Gurgaon | Your city |
-| `country` | India | Your country |
-| `method` | 1 | Prayer calculation method (see below) |
+| `latitude` | 42.3601 | Latitude for prayer times (mosque default) |
+| `longitude` | -71.0589 | Longitude for prayer times (mosque default) |
+| `method` | 2 | Prayer calculation method (see below) |
 | `school` | 1 | 0=Shafi, 1=Hanafi |
+| `city` | Boston | Fallback city — only used if coordinates are empty |
+| `country` | United States | Fallback country — only used if coordinates are empty |
 | `device_name` | — | Google Home device name |
 | `volume` | 100 | Volume level (0-100) |
 | `azan_file` | audio/azan.mp3 | Path to regular azan audio |
@@ -76,6 +78,22 @@ Config is stored in `config.yaml` (created by installer or manually from `config
 | `ha_url` | — | Home Assistant URL (empty = skip TV control) |
 | `ha_token` | — | HA long-lived access token |
 | `tv_entity_id` | — | HA media_player entity for TV |
+
+### Prayer Times API
+
+Times are fetched from Aladhan with the exact parameters the mosque website uses:
+
+```
+https://api.aladhan.com/v1/timings/DD-MM-YYYY?latitude=42.3601&longitude=-71.0589&method=2&school=1
+```
+
+| Parameter | Value | Why |
+|-----------|-------|-----|
+| `latitude` / `longitude` | 42.3601 / -71.0589 | Baked into the website's `abic.js` — every screen shows identical athan times |
+| `method` | 2 (ISNA) | The mosque's locked calculation method |
+| `school` | 1 (Hanafi) | The mosque's locked Asr calculation |
+
+Change `latitude`/`longitude` in `config.yaml` if you ever need a different location. If you blank both out, the code falls back to `city`/`country` via Aladhan's `timingsByCity` endpoint.
 
 ### Prayer Calculation Methods
 

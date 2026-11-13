@@ -9,10 +9,14 @@ CONFIG_FILE = os.path.join(project_root(), "config.yaml")
 CONFIG_EXAMPLE = os.path.join(project_root(), "config.yaml.example")
 
 DEFAULTS = {
-    "city": "Gurgaon",
-    "country": "India",
-    "method": 1,
+    # ABIC — Allston Brighton Islamic Center. Same values the mosque website uses.
+    "latitude": 42.3601,
+    "longitude": -71.0589,
+    "method": 2,
     "school": 1,
+    # Fallback location, only used when latitude/longitude are empty.
+    "city": "Boston",
+    "country": "United States",
     "volume": "100",
     "scan_before_minutes": 5,
     "device_name": "",
